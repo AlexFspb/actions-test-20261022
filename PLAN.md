@@ -11,18 +11,19 @@
 | План | Опубликован в main | [Первый commit PLAN.md](https://github.com/AlexFspb/3d-model-anything/commit/3ce8ec973628b99cbca688beaa4cfb0d09ce3472) |
 | Устройство | iPhone 16 Pro, iOS 26.6.1 | Сообщено пользователем |
 | Форк | Создан; parent и право push подтверждены API | https://github.com/AlexFspb/3d-model-anything |
+| Текущий репозиторий | Полная копия с историей опубликована | [actions-test-20261022](https://github.com/AlexFspb/actions-test-20261022), merge c18a6ad1973e0d2b7a8385d65bbe284561d0e205 |
 | Правила | AGENTS.md опубликован | Подтверждено чтением через GitHub API |
-| Workflow | Опубликован; YAML/Python проверены, удалённый файл совпал с подготовленным | [Commit c2b63d4](https://github.com/AlexFspb/3d-model-anything/commit/c2b63d433c2801ad332c931b0b2c84c44a146864) |
-| Actions / Pages | Actions включены; Deploy viewer Disabled | Подтверждено через браузер |
+| Workflow | Personal iPhone Release успешно собрал IPA | [Run 39830322629](https://github.com/AlexFspb/actions-test-20261022/actions/runs/39830322629), commit 76e0e9ffba66dd5a9f448528526233082ffab343 |
+| Actions / Pages | В новом репозитории Actions работают; Pages job skipped по условию upstream | Подтверждено API |
 | Компоненты Apple | iTunes 12.13.11.1 и Apple Mobile Device Support 19.4.0.10 установлены | Служба Apple Mobile Device Service работает, автозапуск Automatic |
 | iloader | Установлен v2.4.0; iPhone обнаружен и выбран по USB | Подтверждено пользователем и скриншотом iloader (iOS 26.6.1) |
 | Независимый тест Actions | Успешен в новом репозитории (не форке) | [Run 39829117555](https://github.com/AlexFspb/actions-test-20261022/actions/runs/39829117555), Success, 6 секунд |
-| IPA | Пока не собран | В исходном форке всё ещё 0 runs |
+| IPA | Собран, скачан и проверен на Windows | outputs/iphone-build-2/HouseCapture-unsigned.ipa; SHA-256 c0088b3cd7f20c72c3994b20b2315321b0275e40d1fdc5a421bf462a01a86842 |
 | iPhone: установка / скан / экспорт / повторная подпись | Не проверены | Требуют IPA и участия пользователя |
 
 ## Ближайшее действие
 
-Полная копия опубликована merge-коммитом c18a6ad1973e0d2b7a8385d65bbe284561d0e205 в AlexFspb/actions-test-20261022, с сохранением обеих историй. Все 378 файлов источника e97d7a7ab218f4547f33ef53712f4ed7f40641d4 перенесены; исходники приложения и ресурсы не изменены. Первый iOS run 39830172998 дошёл до macOS runner, но упал в проверке версии Xcode из-за broken pipe при grep -q. Проверка исправляется чтением вывода xcodebuild из файла. Запустить исправленный workflow, получить IPA и проверить его. Pages job подтвердил skipped. iPhone обнаружен по USB в iloader; установка, скан, экспорт и повторная подпись пока не проверены.
+Установить проверенный IPA через iloader. Пользователю даны шаги: самостоятельно ввести Apple ID и код входа в iloader, нажать Import IPA, выбрать outputs/iphone-build-2/HouseCapture-unsigned.ipa и сообщить результат. Пароли/коды в чат или репозиторий не передавать. При запросе доверия профилю или Developer Mode пользователь выполняет действия на iPhone. После установки проверить запуск, разрешение камеры, короткий скан, сохранение/повторное открытие комнаты, ZIP-экспорт и повторную подпись поверх без удаления приложения. Эти проверки ещё не выполнены. После паузы из-за заполнения C пользователь разрешил продолжить; перед скачиванием было доступно 8871 MiB, сохранён только IPA с метаданными, без дублирующего ZIP артефакта.
 
 ## Принятые решения
 
@@ -40,7 +41,7 @@
 ## Этапы реализации
 
 1. Создать форк только main и сохранить AGENTS.md и PLAN.md до настройки сборки.
-2. Добавить .github/workflows/build-ios-ipa.yml: ручной запуск и запуск при изменениях приложения/workflow в main, без iOS-сборки на изменения одних документов. Отключить автоматическую публикацию сайта.
+2. Добавить .github/workflows/personal-iphone-release.yml: ручной запуск и запуск при изменениях приложения/workflow в main, без iOS-сборки на изменения одних документов. Отключить автоматическую публикацию сайта.
 3. Сгенерировать Xcode-проект, собрать unsigned Release arm64 для устройства. Проверить Info.plist, bundle ID и платформу iOS. Упаковать Payload/HouseCapture.app в IPA, проверить ZIP, контрольную сумму и метаданные.
 4. Проверить журнал Actions, исправить выявленные ошибки и сохранить ссылки на успешный запуск и commit. Успех CI не означает успех на телефоне.
 5. Подготовить iloader и компоненты Apple на Windows. Пользователь подключает iPhone, вводит Apple ID, подтверждает доверие и включает Developer Mode.
@@ -52,7 +53,7 @@
 
 - [x] Форк создан, AGENTS.md опубликован.
 - [x] PLAN.md опубликован и состояние актуально.
-- [ ] Успешный CI выдал IPA физического iPhone; ZIP, arm64, iOS platform, bundle ID и SHA-256 проверены.
+- [x] Успешный CI выдал IPA физического iPhone; ZIP, arm64, iOS platform, bundle ID и SHA-256 проверены на Windows.
 - [x] GitHub Pages не публикуется автоматически из форка.
 - [x] iloader установлен на Windows.
 - [x] Компоненты Apple установлены, служба связи работает.
@@ -70,6 +71,9 @@
 
 ## Журнал фактов и препятствий
 
+- 2026-10-22: исправление проверки Xcode опубликовано [коммитом 76e0e9f](https://github.com/AlexFspb/actions-test-20261022/commit/76e0e9ffba66dd5a9f448528526233082ffab343). [iOS run 39830322629](https://github.com/AlexFspb/actions-test-20261022/actions/runs/39830322629), job 120004442720 — success. Реальные версии: macOS 27.0.1 / image 20261012.0260.1, Xcode 27.0 (27A266a), XcodeGen 2.46.0, iPhoneOS SDK 27.0. Release arm64, minimum iOS 17.0, app version 1.0 / build 1, unsigned.
+- 2026-10-22: скачан артефакт HouseCapture-unsigned-2-1 (ID 12449021225), срок хранения до 2026-11-21. SHA-256 ZIP артефакта 4ba4a88ed26bc3de956acae357f581df2078f7a576700cef01ddbfd93bd36b10 совпал с GitHub digest. Внутри IPA 4 998 422 bytes; SHA-256 c0088b3cd7f20c72c3994b20b2315321b0275e40d1fdc5a421bf462a01a86842 совпал с SHA256SUMS и build-info.json. ZIP CRC исправен; Mach-O executable arm64 и LC_BUILD_VERSION platform=2 (iOS device), bundle ID io.github.alexfspb.housecapture, камера/доступ к документам заданы. Отсутствует embedded.mobileprovision, как ожидается для unsigned. Наличие и сохранность скана на телефоне из этих проверок не следуют.
+- 2026-10-22: рядом с локальным IPA сохранены SHA256SUMS, build-info.json и verification.json. Apple ID, подпись, установка и скан пока ожидают пользователя. Продолжение разрешено после паузы из-за места на C.
 - 2026-10-22: пользователь явно разрешил локальное клонирование и перенос всего форка в работающий actions-test-20261022. Git merge сохранил историю исходника и теста; локальный конфликт README разрешён в пользу полного README автора. [Merge c18a6ad](https://github.com/AlexFspb/actions-test-20261022/commit/c18a6ad1973e0d2b7a8385d65bbe284561d0e205). Отличия от source: AGENTS.md, PLAN.md, Pages guard, дополнительный test.yml. Pages job 120003915956 skipped. Исторические проблемы регистрации старого форка больше не блокируют текущую сборку.
 - 2026-10-22: первая iOS-сборка [39830172998](https://github.com/AlexFspb/actions-test-20261022/actions/runs/39830172998) запустилась на xcode-27-arm64 image 20261012.0260.1, Xcode 27.0 (27A266a). Ошибка нашей проверки: xcodebuild -version | grep -q завершила reader раньше записи второй строки, broken pipe/exit 134 при pipefail. Исправление: сохранить вывод в файл, затем проверить его отдельным grep. Приложение ещё не компилировалось.
 - 2026-10-22: форк создан через Chrome с разрешения пользователя, без локального клона.
