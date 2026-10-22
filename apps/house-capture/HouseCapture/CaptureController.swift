@@ -27,8 +27,7 @@ struct CapturePlan {
 ///   measuring the live LiDAR mesh against the saved one. No match → start unaligned.
 /// - RoomPlan runs headless in the background, measuring walls, doors, windows and
 ///   furniture boxes.
-/// - LiDAR mesh + depth are switched on inside RoomPlan's own configuration (verified on
-///   device: RoomPlan keeps working, and the mesh is ours to draw).
+  /// - LiDAR mesh + depth are configured on the shared ARSession before RoomPlan starts.
 /// - The camera view shows the mesh tinted by photo coverage plus RoomPlan's live walls;
 ///   sharp photos are taken wherever they turn the most red to green.
 /// - Every finished room is recorded in house.json right away (a crash loses at most the
@@ -116,6 +115,13 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
   private var roomSessionCreated = false
   private lazy var roomSession: RoomCaptureSession = {
     roomSessionCreated = true
+    // Give RoomPlan a configured custom session. Starting it with a bare session and
+    // only adding mesh flags afterwards can report them enabled without delivering
+    // any mesh anchors until RoomPlan stops (observed on the personal iPhone).
+    if arSession.configuration == nil {
+      arSession.run(Self.relocalizationConfiguration(map: nil), options: [])
+      diagnostics.log("configured shared ARSession before RoomPlan", since: startedAt)
+    }
     let s = RoomCaptureSession(arSession: arSession)
     s.delegate = self
     return s
@@ -803,11 +809,33 @@ final class CaptureController: NSObject, ObservableObject, RoomCaptureSessionDel
     let meshFile = "mesh/room-\(index).ply"
     var result = preStopMesh
     if case .success(let r)? = result, r.vertices > 0 {} else {
+      // RoomPlan can publish its first public mesh anchors only after stopping.
+      // The live feed is frozen for export, so explicitly ingest a final snapshot
+      // and wait for that ingestion before the engine's export barrier.
+      let deadline = CACurrentMediaTime() + 2
+      while !closed, (arSession.currentFrame?.anchors.compactMap { $0 as? ARMeshAnchor }.isEmpty ?? true),
+            CACurrentMediaTime() < deadline {
+        try? await Task.sleep(for: .milliseconds(100))
+      }
+      guard !closed else { return }
+      let anchors = arSession.currentFrame?.anchors.compactMap { $0 as? ARMeshAnchor } ?? []
+      let engine = engine
+      await Task.detached(priority: .userInitiated) {
+        for anchor in anchors { engine.update(anchor) }
+      }.value
+      diagnostics.log("final mesh snapshot: \(anchors.count) anchors", since: startedAt)
       result = await withCheckedContinuation { c in engine.exportPLY(to: bundle.file(meshFile)) { c.resume(returning: $0) } }
     }
     if case .success(let r)? = result, r.vertices > 0 {
       record.mesh = MeshRecord(file: meshFile, anchors: 0, vertices: r.vertices, faces: r.faces)
       record.coverage = r.covered
+    } else {
+      lastWarning = "No LiDAR mesh was saved. The room layout, photos and depth recording are still available."
+      if case .failure(let error)? = result {
+        diagnostics.recordFailure(source: "mesh export", chain: Diagnostics.errorChain(error), since: startedAt)
+      } else {
+        diagnostics.log("mesh export empty: no accepted vertices", since: startedAt)
+      }
     }
     record.photoCoverage = record.photographedPercent
     record.detailSeconds = roomStartedAt.map { Date().timeIntervalSince($0) }
