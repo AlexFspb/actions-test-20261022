@@ -1,0 +1,9 @@
+name: Actions test
+on: [push, workflow_dispatch]
+permissions: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: echo 'GitHub Actions works'
