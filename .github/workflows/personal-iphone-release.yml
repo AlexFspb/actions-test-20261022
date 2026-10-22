@@ -36,14 +36,15 @@ jobs:
       - name: Prepare build tools
         run: |
           set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/housecapture-logs" "$RUNNER_TEMP/housecapture-delivery"
           test -d "$DEVELOPER_DIR"
-          xcodebuild -version
-          xcodebuild -version | grep -Eq '^Xcode 27\.0$'
+          xcodebuild -version > "$RUNNER_TEMP/housecapture-logs/xcode-version.txt"
+          cat "$RUNNER_TEMP/housecapture-logs/xcode-version.txt"
+          grep -Ex 'Xcode 27\.0' "$RUNNER_TEMP/housecapture-logs/xcode-version.txt"
           if ! command -v xcodegen >/dev/null 2>&1; then
             brew install xcodegen
           fi
           xcodegen --version
-          mkdir -p "$RUNNER_TEMP/housecapture-logs" "$RUNNER_TEMP/housecapture-delivery"
 
       - name: Generate project
         working-directory: apps/house-capture
